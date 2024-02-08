@@ -20,11 +20,11 @@ app.use(function (_, res, next) {
 });
 
 let PGHOST, PGDATABASE, PGUSER, PGPASSWORD, ENDPOINT_ID;
-PGHOST='ep-royal-morning-23801106.us-east-2.aws.neon.tech'
-PGDATABASE='FinalProject'
-PGUSER='hediyealitabar'
-PGPASSWORD='0FiAKUuqdM1E'
-ENDPOINT_ID='ep-royal-morning-23801106'
+PGHOST = 'ep-royal-morning-23801106.us-east-2.aws.neon.tech'
+PGDATABASE = 'FinalProject'
+PGUSER = 'hediyealitabar'
+PGPASSWORD = '0FiAKUuqdM1E'
+ENDPOINT_ID = 'ep-royal-morning-23801106'
 
 const sql = postgres({
   host: PGHOST,
@@ -41,47 +41,70 @@ const sql = postgres({
 const port = 3000;
 
 app.get("/places", (req, res) => {
-    sql`SELECT * FROM places`.then((result) => {
-      res.send(result);
+  sql`SELECT * FROM places`.then((result) => {
+    res.send(result);
+  });
+});
+
+app.get("/users", (req, res) => {
+  sql`SELECT * FROM users`.then((result) => {
+    res.send(result);
+  });
+});
+
+app.get("/reviews", (req, res) => {
+  sql`SELECT * FROM reviews`.then((result) => {
+    res.send(result);
+  });
+});
+
+// search => name of places
+app.get("/places/:name", (req, res) => {
+  const placeName = req.params.name;
+  sql`SELECT * FROM places WHERE name = ${placeName}`.then((result) => {
+    res.send(result);
+  })
+    .catch((error) => {
+      console.error("Error retrieving place:", error);
+      res.status(500).json({ error: "Internal server error" });
     });
-  });
+});
 
-  app.get("/users", (req, res) => {
-    sql`SELECT * FROM users`.then((result) => {
-      res.send(result);
+// filter => country
+app.get("/places/:country", (req, res) => {
+  const country = req.params.country;
+  sql`SELECT * FROM places WHERE country = ${country}`.then((result) => {
+    res.send(result);
+  })
+    .catch((error) => {
+      console.error("Error retrieving place:", error);
+      res.status(500).json({ error: "Internal server error" });
     });
-  });
+});
 
-  app.get("/reviews", (req, res) => {
-    sql`SELECT * FROM reviews`.then((result) => {
+app.get("/places/:id", (req, res) => {
+  const placeId = req.params.id;
+  sql`SELECT * FROM places WHERE id = ${placeId}`
+    .then((result) => {
       res.send(result);
+    })
+    .catch((error) => {
+      console.error("Error retrieving place:", error);
+      res.status(500).json({ error: "Internal server error" });
     });
-  });
+});
 
-
-  app.get("/places/:id", (req, res) => {
-    const placeId = req.params.id;
-    sql`SELECT * FROM places WHERE id = ${placeId}`
-      .then((result) => {
-        res.send(result);
-      })
-      .catch((error) => {
-        console.error("Error retrieving task:", error);
-        res.status(500).json({ error: "Internal server error" });
-      });
-  });
-
-  app.get("/users/:id", (req, res) => {
-    const userId = req.params.id;
-    sql`SELECT * FROM users WHERE id = ${userId}`
-      .then((result) => {
-        res.send(result);
-      })
-      .catch((error) => {
-        console.error("Error retrieving task:", error);
-        res.status(500).json({ error: "Internal server error" });
-      });
-  });
+app.get("/users/:id", (req, res) => {
+  const userId = req.params.id;
+  sql`SELECT * FROM users WHERE id = ${userId}`
+    .then((result) => {
+      res.send(result);
+    })
+    .catch((error) => {
+      console.error("Error retrieving place:", error);
+      res.status(500).json({ error: "Internal server error" });
+    });
+});
 
 app.listen(port, () =>
   console.log(` My App listening at http://localhost:${port}`)
