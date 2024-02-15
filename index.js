@@ -2,11 +2,18 @@ const express = require("express");
 const postgres = require("postgres");
 const app = express();
 
+// const cors = require("cors");
+
+// const corsOptions = {
+//   origin: "http://5173",
+// };
+
+// app.use(cors(corsOptions));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(function (_, res, next) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Methods",
     "GET, POST, OPTIONS, PUT, PATCH, DELETE"
@@ -16,6 +23,8 @@ app.use(function (_, res, next) {
     "X-Requested-With,content-type"
   );
   res.setHeader("Access-Control-Allow-Credentials", true);
+  res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
   next();
 });
 
@@ -40,12 +49,6 @@ const sql = postgres({
 
 const port = 3000;
 
-app.get("/places", (req, res) => {
-  sql`SELECT * FROM places`.then((result) => {
-    res.send(result);
-  });
-});
-
 app.get("/users", (req, res) => {
   sql`SELECT * FROM users`.then((result) => {
     res.send(result);
@@ -58,82 +61,33 @@ app.get("/reviews", (req, res) => {
   });
 });
 
-// search => name of places
-// app.get("/places/:name", (req, res) => {
-//   const placeName = req.params.name.toLowerCase();
-//   sql`SELECT * FROM places WHERE LOWER(name) LIKE '%' || ${placeName} || '%'`.then((result) => {
-//     res.send(result);
-//   })
-//     .catch((error) => {
-//       console.error("Error retrieving place:", error);
-//       res.status(500).json({ error: "Internal server error" });
-//     });
-// });
+app.get('/places', async (req, res) => {
+  try {
+    let name = req.query.name;
+    name = name ? name.toLowerCase() : '';
+    let country = req.query.country;
+    country = country ? country.toLowerCase() : '';
+    let query = sql`SELECT * FROM places`;
+    if (!country & !name) {
+      sql`SELECT * FROM places`.then((result) => {
+        res.send(result);
+      });
+    }
+     else if (name) {
+      query = sql`${query} WHERE LOWER(name) LIKE '%' || ${name} || '%'`;
+      const result = await query;
+      res.send(result);
+    }
+    else {
+      query = sql`${query} WHERE LOWER(country) LIKE '%' || ${country} || '%'`;
+      const result = await query;
+      res.send(result);
+    }
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
 
-// app.get("/places", (req, res) => {
-//   const name = req.params.name;
-//   sql`SELECT * FROM places`
-//   let filters = [];
-//   if(name){
-//     filters.push (`name LIKE '%${name}%'`)
-//   }
-//    WHERE LOWER(name) LIKE '%' || ${placeName} || '%'`.then((result) => {
-//     console.log('sql => ', sql);
-//     const { rows: books } = await db.query(sql);
-
-//     response.send(books);
-// });
-
-
-// app.get('/books', (req, res) => {
-//   const name = req.query.name;
-
-//   sql `SELECT * FROM places`.then((result) => {
-//   let filters = [];
-
-//   if (name) {
-//     filters.push(` title LIKE '%${name}%' `)
-//   }
-
-//   res.send(result);
-// })
-// .catch((error) => {
-//   console.error("Error retrieving place:", error);
-//   res.status(500).json({ error: "Internal server error" });
-// });
-// });
-
-// app.get('/places', (req, res) => {
-//   const name = request.query.name;
-//   let resultBooks = books;
-
-//   if (name) {
-//     resultBooks = books.filter(prod => prod.name.includes(name));
-//   }
-//   res.send(resultBooks);
-// })
-
-// app.get('/places', (req, res) => {
-//   const name = req.query.name;
-
-//   if (!name) {
-//     sql`SELECT * FROM places`.then((result) => {
-//       res.send(result);
-//     })
-//     .catch((error) => {
-//       console.error("Error retrieving places:", error);
-//       res.status(500).json({ error: "Internal server error" });
-//     });
-//   } else {
-//     sql`SELECT * FROM places WHERE name LIKE '%' || ${name} || '%'`.then((result) => {
-//       res.send(result);
-//     })
-//     .catch((error) => {
-//       console.error("Error retrieving places by name:", error);
-//       res.status(500).json({ error: "Internal server error" });
-//     });
-//   }
-// });
 
 app.get("/places/:id", (req, res) => {
   const placeId = req.params.id;
@@ -161,7 +115,7 @@ app.get("/users/:id", (req, res) => {
 
 app.post('/users', async (req, res) => {
 const {username, pasword} = req.body;
-const findUser = await sql `SELECT * FROM users WHERE username = ${username} AND pasword = ${pasword}:`;
+const findUser = await sql `SELECT * FROM users WHERE username = ${username} AND pasword = ${pasword};`;
 console.log (findUser);
 if(findUser && findUser.length > 0){
   res.send(findUser);;
