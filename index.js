@@ -14,17 +14,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(function (_, res, next) {
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, OPTIONS, PUT, PATCH, DELETE"
-  );
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "X-Requested-With,content-type"
-  );
+  res.setHeader('Access-control-Allow-Origin', '*');
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE");
+  res.setHeader("Access-Control-Allow-Headers", "X-Requested-With,content-type");
   res.setHeader("Access-Control-Allow-Credentials", true);
-  res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
   next();
 });
 
@@ -73,7 +66,7 @@ app.get('/places', async (req, res) => {
         res.send(result);
       });
     }
-     else if (name) {
+    else if (name) {
       query = sql`${query} WHERE LOWER(name) LIKE '%' || ${name} || '%'`;
       const result = await query;
       res.send(result);
@@ -87,7 +80,6 @@ app.get('/places', async (req, res) => {
     res.status(500).send({ error: error.message });
   }
 });
-
 
 app.get("/places/:id", (req, res) => {
   const placeId = req.params.id;
@@ -113,14 +105,63 @@ app.get("/users/:id", (req, res) => {
     });
 });
 
+app.post("/places", async (req, res) => {
+  const { name, description, country } = req.body;
+  const places = await sql`INSERT INTO places (name, description, country) VALUES (${name}, ${description}, ${country})`
+  res.send(places);
+    // .then(() => {
+    //   res.send("New task created.");
+    // })
+    // .catch((error) => {
+    //   res.status(500).send("Error creating task.");
+    // });
+});
+
+app.delete("/places/:id", (req, res) => {
+  const placeID = req.params.id;
+
+  sql`DELETE FROM places WHERE id = ${placeID}`
+    .then(() => {
+      res.send(`Task with ID ${placeID} has been deleted.`);
+    })
+    .catch((error) => {
+      res.status(500).send("Error deleting task.");
+    });
+});
+
+app.put("/places/:id", (req, res) => {
+  const placeID = req.params.id;
+  const { name, description, country } = req.body;
+
+  sql`UPDATE places SET name = ${name}, description = ${description}, country = ${country} WHERE id = ${placeID}`
+    .then(() => {
+      res.send(`Place with ID ${placeID} has been updated.`);
+    })
+    .catch((error) => {
+      res.status(500).send("Error updating place.");
+    });
+});
+
+app.patch("/places/:id", (req, res) => {
+  const placeID = req.params.id;
+  let { name } = req.body;
+  sql`UPDATE places SET name = ${name} WHERE id = ${placeID}`
+    .then(() => {
+      res.send(`Status of Place with ID ${placeID} has been updated.`);
+    })
+    .catch((error) => {
+      res.status(500).send("Error updating Place`s name.");
+    });
+});
+
 app.post('/users', async (req, res) => {
-const {username, pasword} = req.body;
-const findUser = await sql `SELECT * FROM users WHERE username = ${username} AND pasword = ${pasword};`;
-console.log (findUser);
-if(findUser && findUser.length > 0){
-  res.send(findUser);;
-}
-res.send({error: true, message: 'wrong username and/or pasword'});
+  const { username, pasword } = req.body;
+  const findUser = await sql`SELECT * FROM users WHERE username = ${username} AND pasword = ${pasword};`;
+  console.log(findUser);
+  if (findUser && findUser.length > 0) {
+    res.send(findUser);;
+  }
+  res.send({ error: true, message: 'wrong username and/or pasword' });
 });
 
 app.listen(port, () =>
