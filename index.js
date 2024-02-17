@@ -2,13 +2,9 @@ const express = require("express");
 const postgres = require("postgres");
 const app = express();
 
-// const cors = require("cors");
+const cors = require("cors");
 
-// const corsOptions = {
-//   origin: "http://5173",
-// };
-
-// app.use(cors(corsOptions));
+app.use(cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -109,12 +105,12 @@ app.post("/places", async (req, res) => {
   const { name, description, country } = req.body;
   const places = await sql`INSERT INTO places (name, description, country) VALUES (${name}, ${description}, ${country})`
   res.send(places);
-    // .then(() => {
-    //   res.send("New task created.");
-    // })
-    // .catch((error) => {
-    //   res.status(500).send("Error creating task.");
-    // });
+  // .then(() => {
+  //   res.send("New place created.");
+  // })
+  // .catch((error) => {
+  //   res.status(500).send("Error creating place.");
+  // });
 });
 
 app.delete("/places/:id", (req, res) => {
@@ -122,10 +118,10 @@ app.delete("/places/:id", (req, res) => {
 
   sql`DELETE FROM places WHERE id = ${placeID}`
     .then(() => {
-      res.send(`Task with ID ${placeID} has been deleted.`);
+      res.send(`Place with ID ${placeID} has been deleted.`);
     })
     .catch((error) => {
-      res.status(500).send("Error deleting task.");
+      res.status(500).send("Error deleting place.");
     });
 });
 
@@ -146,12 +142,12 @@ app.patch("/places/:id", (req, res) => {
   const placeID = req.params.id;
   let { name } = req.body;
   sql`UPDATE places SET name = ${name} WHERE id = ${placeID}`
-    .then(() => {
-      res.send(`Status of Place with ID ${placeID} has been updated.`);
-    })
-    .catch((error) => {
-      res.status(500).send("Error updating Place`s name.");
-    });
+  .then(() => {
+    res.send(`Name of Place with ID ${placeID} has been updated.`);
+  })
+  .catch((error) => {
+    res.status(500).send("Error updating Place`s name.");
+  });
 });
 
 app.post('/users', async (req, res) => {
