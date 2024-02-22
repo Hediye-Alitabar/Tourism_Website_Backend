@@ -12,7 +12,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(function (_, res, next) {
   res.setHeader('Access-control-Allow-Origin', '*');
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE");
-  res.setHeader("Access-Control-Allow-Headers", "X-Requested-With,content-type");
+  res.setHeader("Access-Control-Allow-Headers", "X-Requested-With,content-type,Authorization");
   res.setHeader("Access-Control-Allow-Credentials", true);
   next();
 });
@@ -67,11 +67,16 @@ app.get('/places', async (req, res) => {
       const result = await query;
       res.send(result);
     }
-    else {
+    else if (country) {
       query = sql`${query} WHERE LOWER(country) LIKE '%' || ${country} || '%'`;
       const result = await query;
       res.send(result);
     }
+    else if (req.query.sort) {
+      query = sql`SELECT * FROM place ORDER BY price`;
+      res.send(query);
+    }
+
   } catch (error) {
     res.status(500).send({ error: error.message });
   }
@@ -116,49 +121,54 @@ app.post("/places", async (req, res) => {
 app.delete("/places/:id", (req, res) => {
   const placeID = req.params.id;
 
-  sql`DELETE FROM places WHERE id = ${placeID}`
+  const query = sql`DELETE FROM places WHERE id = ${placeID}`
     .then(() => {
-      res.send(`Place with ID ${placeID} has been deleted.`);
+      res.send(query);
     })
     .catch((error) => {
       res.status(500).send("Error deleting place.");
     });
 });
 
-app.put("/places/:id", (req, res) => {
+app.patch("/places/:id", (req, res) => {
   const placeID = req.params.id;
-  const { name, description, country } = req.body;
-
-  sql`UPDATE places SET name = ${name}, description = ${description}, country = ${country} WHERE id = ${placeID}`
+  let { hardship } = req.body;
+  sql`UPDATE places SET hardship = ${hardship} WHERE id = ${placeID}`
     .then(() => {
-      res.send(`Place with ID ${placeID} has been updated.`);
+      res.send(`Hardship of Place with ID ${placeID} has been updated.`);
     })
     .catch((error) => {
-      res.status(500).send("Error updating place.");
+      res.status(500).send("Error updating Place`s name.");
     });
 });
 
-app.patch("/places/:id", (req, res) => {
-  const placeID = req.params.id;
-  let { name } = req.body;
-  sql`UPDATE places SET name = ${name} WHERE id = ${placeID}`
-  .then(() => {
-    res.send(`Name of Place with ID ${placeID} has been updated.`);
-  })
-  .catch((error) => {
-    res.status(500).send("Error updating Place`s name.");
-  });
+app.put("/places/:id", async (req, res) => {
+  try {
+    const placeId = req.params.id;
+    const { hardship } = req.body;
+
+    const query = await sql`UPDATE places SET hardship = ${hardship} WHERE id = ${placeId}`;
+
+    res.send(query);
+  } catch (error) {
+    console.error("Error updating place:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
+
 
 app.post('/users', async (req, res) => {
   const { username, pasword } = req.body;
+  const headers = req.headers;
+  console.log(headers);
   const findUser = await sql`SELECT * FROM users WHERE username = ${username} AND pasword = ${pasword};`;
-  console.log(findUser);
   if (findUser && findUser.length > 0) {
-    res.send(findUser);;
+    res.send({ user: { id: findUser[0].id, username: findUser[0].username, isadmin: findUser[0].isadmin } });
+  } else {
+    res.status(401).json({ error: true, message: 'wrong username and/or password' });
   }
-  res.send({ error: true, message: 'wrong username and/or pasword' });
 });
+
 
 app.listen(port, () =>
   console.log(` My App listening at http://localhost:${port}`)
