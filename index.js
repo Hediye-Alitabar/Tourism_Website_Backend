@@ -117,15 +117,6 @@ app.get("/places/:id", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
 
   }
-  // const placeId = req.params.id;
-  // sql`SELECT * FROM places WHERE id = ${placeId}`
-  //   .then((result) => {
-  //     res.send(result);
-  //   })
-  //   .catch((error) => {
-  //     console.error("Error retrieving place:", error);
-  //     res.status(500).json({ error: "Internal server error" });
-  //   });
 });
 
 app.get("/users/:id", async (req, res) => {
@@ -137,27 +128,12 @@ app.get("/users/:id", async (req, res) => {
     console.error("Error retrieving place:", error);
     res.status(500).json({ error: "Internal server error" });
   }
-  // const userId = req.params.id;
-  // sql`SELECT * FROM users WHERE id = ${userId}`
-  //   .then((result) => {
-  //     res.send(result);
-  //   })
-  //   .catch((error) => {
-  //     console.error("Error retrieving place:", error);
-  //     res.status(500).json({ error: "Internal server error" });
-  //   });
 });
 
 app.post("/places", async (req, res) => {
   const { name, description, country } = req.body;
   const places = await sql`INSERT INTO places (name, description, country) VALUES (${name}, ${description}, ${country})`
   res.send(places);
-  // .then(() => {
-  //   res.send("New place created.");
-  // })
-  // .catch((error) => {
-  //   res.status(500).send("Error creating place.");
-  // });
 });
 
 //delete place 
@@ -171,15 +147,6 @@ app.delete("/places/:id", async (req, res) => {
     console.error("Error deleting place.");
     res.status(500).send({ error: "Internal server error" });
   }
-  // const placeID = req.params.id;
-
-  // const query = sql`DELETE FROM places WHERE id = ${placeID}`
-  //   .then(() => {
-  //     res.send(query);
-  //   })
-  // .catch((error) => {
-  //   res.status(500).send("Error deleting place.");
-  // });
 });
 
 //edit place
@@ -193,15 +160,6 @@ app.patch("/places/:id", async (req, res) => {
     console.error("place was not edit", error);
     res.status(401).json({ error: "Internal server error" })
   }
-  // const placeID = req.params.id;
-  // let { hardship } = req.body;
-  // sql`UPDATE places SET hardship = ${hardship} WHERE id = ${placeID}`
-  //   .then(() => {
-  //     res.send(`Hardship of Place with ID ${placeID} has been updated.`);
-  //   })
-  //   .catch((error) => {
-  //     res.status(500).send("Error updating Place`s name.");
-  //   });
 });
 
 //edit place 
@@ -231,15 +189,6 @@ app.post('/users', async (req, res) => {
     console.error("Login faield :", error);
     res.status(401).json({ error: 'wrong username and/or password' });
   }
-  // const { username, pasword } = req.body;
-  // const headers = req.headers;
-  // console.log(headers);
-  // const findUser = await sql`SELECT * FROM users WHERE username = ${username} AND pasword = ${pasword};`;
-  // if (findUser && findUser.length > 0) {
-  //   res.send({ user: { id: findUser[0].id, username: findUser[0].username, isadmin: findUser[0].isadmin } });
-  // } else {
-  //   res.status(401).json({ error: true, message: 'wrong username and/or password' });
-  // }
 });
 
 
