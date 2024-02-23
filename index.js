@@ -38,72 +38,114 @@ const sql = postgres({
 
 const port = 3000;
 
-app.get("/users", (req, res) => {
-  sql`SELECT * FROM users`.then((result) => {
-    res.send(result);
-  });
+//get user
+app.get("/users", async (req, res) => {
+  try {
+    const query = sql`SELECT * FROM users`;
+    res.send(query);
+
+  } catch (error) {
+    console.error("user not find", error);
+    res.status(500).json({ error: "Internal server error" });
+
+
+  }
+  // sql`SELECT * FROM users`.then((result) => {
+  //   res.send(result);
+  // });
 });
 
-app.get("/reviews", (req, res) => {
-  sql`SELECT * FROM reviews`.then((result) => {
-    res.send(result);
-  });
+//get reviews
+app.get("/reviews", async (req, res) => {
+  try {
+    const query = await sql`SELECT * FROM reviews`
+    res.send(query);
+  } catch (error) {
+    console.error("user not comments", error);
+    res.status(500).json({ error: "Internal server error" });
+
+  }
+  //  const query = await sql`SELECT * FROM reviews`
+  //     res.send(query);
+
 });
 
+//get place & search by name - country & sort by hardShip 
 app.get('/places', async (req, res) => {
   try {
     let name = req.query.name;
     name = name ? name.toLowerCase() : '';
     let country = req.query.country;
     country = country ? country.toLowerCase() : '';
-    let query = sql`SELECT * FROM places`;
+    let query = await sql`SELECT * FROM places`;
     if (!country & !name) {
-      sql`SELECT * FROM places`.then((result) => {
-        res.send(result);
-      });
+      query = await sql`SELECT * FROM places`;
+      res.send(query);
+      // sql`SELECT * FROM places`.then((result) => {
+      //   res.send(result);
+      // });
     }
     else if (name) {
-      query = sql`${query} WHERE LOWER(name) LIKE '%' || ${name} || '%'`;
-      const result = await query;
-      res.send(result);
-    }
-    else if (country) {
-      query = sql`${query} WHERE LOWER(country) LIKE '%' || ${country} || '%'`;
-      const result = await query;
-      res.send(result);
-    }
-    else if (req.query.sort) {
-      query = sql`SELECT * FROM place ORDER BY price`;
+      query = await sql`${query} WHERE LOWER(name) LIKE '%' || ${name} || '%'`;
       res.send(query);
     }
+    else if (country) {
+      query = await sql`${query} WHERE LOWER(country) LIKE '%' || ${country} || '%'`;
+      res.send(query);
+    }
+    else if (req.query.sort) {
+      query = sql`SELECT * FROM places ORDER BY hardship`;
+      res.send(query);
+    }
+    // else if (req.query.sort) {
+    //   query = await sql`SELECT * FROM places ORDER BY name ASC`;
+    //   res.send(query);
+    // }
 
   } catch (error) {
     res.status(500).send({ error: error.message });
   }
 });
 
-app.get("/places/:id", (req, res) => {
-  const placeId = req.params.id;
-  sql`SELECT * FROM places WHERE id = ${placeId}`
-    .then((result) => {
-      res.send(result);
-    })
-    .catch((error) => {
-      console.error("Error retrieving place:", error);
-      res.status(500).json({ error: "Internal server error" });
-    });
+app.get("/places/:id", async (req, res) => {
+  try {
+    const placeId = req.params.id;
+    const query = await sql`SELECT * FROM places WHERE id = ${placeId}`;
+    res.send(query);
+  } catch (error) {
+    console.error("Error retrieving place:", error);
+    res.status(500).json({ error: "Internal server error" });
+
+  }
+  // const placeId = req.params.id;
+  // sql`SELECT * FROM places WHERE id = ${placeId}`
+  //   .then((result) => {
+  //     res.send(result);
+  //   })
+  //   .catch((error) => {
+  //     console.error("Error retrieving place:", error);
+  //     res.status(500).json({ error: "Internal server error" });
+  //   });
 });
 
-app.get("/users/:id", (req, res) => {
-  const userId = req.params.id;
-  sql`SELECT * FROM users WHERE id = ${userId}`
-    .then((result) => {
-      res.send(result);
-    })
-    .catch((error) => {
-      console.error("Error retrieving place:", error);
-      res.status(500).json({ error: "Internal server error" });
-    });
+app.get("/users/:id", async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const query = await sql`SELECT * FROM users WHERE id = ${userId}`
+    res.send(query);
+  } catch (error) {
+    console.error("Error retrieving place:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+  // const userId = req.params.id;
+  // sql`SELECT * FROM users WHERE id = ${userId}`
+  //   .then((result) => {
+  //     res.send(result);
+  //   })
+  //   .catch((error) => {
+  //     console.error("Error retrieving place:", error);
+  //     res.status(500).json({ error: "Internal server error" });
+  //   });
 });
 
 app.post("/places", async (req, res) => {
@@ -118,37 +160,56 @@ app.post("/places", async (req, res) => {
   // });
 });
 
-app.delete("/places/:id", (req, res) => {
-  const placeID = req.params.id;
+//delete place 
+app.delete("/places/:id", async (req, res) => {
+  try {
+    const placeID = req.params.id;
+    const query = await sql`DELETE FROM places WHERE id = ${placeID}`
+    res.send(query);
 
-  const query = sql`DELETE FROM places WHERE id = ${placeID}`
-    .then(() => {
-      res.send(query);
-    })
-    .catch((error) => {
-      res.status(500).send("Error deleting place.");
-    });
+  } catch (error) {
+    console.error("Error deleting place.");
+    res.status(500).send({ error: "Internal server error" });
+  }
+  // const placeID = req.params.id;
+
+  // const query = sql`DELETE FROM places WHERE id = ${placeID}`
+  //   .then(() => {
+  //     res.send(query);
+  //   })
+  // .catch((error) => {
+  //   res.status(500).send("Error deleting place.");
+  // });
 });
 
-app.patch("/places/:id", (req, res) => {
-  const placeID = req.params.id;
-  let { hardship } = req.body;
-  sql`UPDATE places SET hardship = ${hardship} WHERE id = ${placeID}`
-    .then(() => {
-      res.send(`Hardship of Place with ID ${placeID} has been updated.`);
-    })
-    .catch((error) => {
-      res.status(500).send("Error updating Place`s name.");
-    });
+//edit place
+app.patch("/places/:id", async (req, res) => {
+  try {
+    const placeID = req.params.id;
+    let { hardship } = req.body;
+    const query = await sql`UPDATE places SET hardship = ${hardship} WHERE id = ${placeID}`;
+    res.send(query);
+  } catch (error) {
+    console.error("place was not edit", error);
+    res.status(401).json({ error: "Internal server error" })
+  }
+  // const placeID = req.params.id;
+  // let { hardship } = req.body;
+  // sql`UPDATE places SET hardship = ${hardship} WHERE id = ${placeID}`
+  //   .then(() => {
+  //     res.send(`Hardship of Place with ID ${placeID} has been updated.`);
+  //   })
+  //   .catch((error) => {
+  //     res.status(500).send("Error updating Place`s name.");
+  //   });
 });
 
+//edit place 
 app.put("/places/:id", async (req, res) => {
   try {
     const placeId = req.params.id;
     const { hardship } = req.body;
-
     const query = await sql`UPDATE places SET hardship = ${hardship} WHERE id = ${placeId}`;
-
     res.send(query);
   } catch (error) {
     console.error("Error updating place:", error);
@@ -156,17 +217,29 @@ app.put("/places/:id", async (req, res) => {
   }
 });
 
-
+//login
 app.post('/users', async (req, res) => {
-  const { username, pasword } = req.body;
-  const headers = req.headers;
-  console.log(headers);
-  const findUser = await sql`SELECT * FROM users WHERE username = ${username} AND pasword = ${pasword};`;
-  if (findUser && findUser.length > 0) {
-    res.send({ user: { id: findUser[0].id, username: findUser[0].username, isadmin: findUser[0].isadmin } });
-  } else {
-    res.status(401).json({ error: true, message: 'wrong username and/or password' });
+  try {
+    const { username, pasword } = req.body;
+    const headers = req.headers;
+    console.log(headers);
+    const findUser = await sql`SELECT * FROM users WHERE username = ${username} AND pasword = ${pasword};`;
+    if (findUser && findUser.length > 0) {
+      res.send({ user: { id: findUser[0].id, username: findUser[0].username, isadmin: findUser[0].isadmin } });
+    }
+  } catch (error) {
+    console.error("Login faield :", error);
+    res.status(401).json({ error: 'wrong username and/or password' });
   }
+  // const { username, pasword } = req.body;
+  // const headers = req.headers;
+  // console.log(headers);
+  // const findUser = await sql`SELECT * FROM users WHERE username = ${username} AND pasword = ${pasword};`;
+  // if (findUser && findUser.length > 0) {
+  //   res.send({ user: { id: findUser[0].id, username: findUser[0].username, isadmin: findUser[0].isadmin } });
+  // } else {
+  //   res.status(401).json({ error: true, message: 'wrong username and/or password' });
+  // }
 });
 
 
