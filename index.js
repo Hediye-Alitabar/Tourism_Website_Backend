@@ -38,10 +38,10 @@ const sql = postgres({
 
 const port = 3000;
 
-//get user
+//Get users
 app.get("/users", async (req, res) => {
   try {
-    const query = sql`SELECT * FROM users`;
+    const query = await sql`SELECT * FROM users`;
     res.send(query);
 
   } catch (error) {
@@ -50,12 +50,9 @@ app.get("/users", async (req, res) => {
 
 
   }
-  // sql`SELECT * FROM users`.then((result) => {
-  //   res.send(result);
-  // });
 });
 
-//get reviews
+//Get reviews
 app.get("/reviews", async (req, res) => {
   try {
     const query = await sql`SELECT * FROM reviews`
@@ -65,9 +62,47 @@ app.get("/reviews", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
 
   }
-  //  const query = await sql`SELECT * FROM reviews`
-  //     res.send(query);
 
+});
+
+// Get comments by Place ID
+app.get("/reviews/:placeId", async (req, res) => {
+  try {
+    const { placeId } = req.params;
+    const query = await sql`SELECT * FROM reviews WHERE place_id = ${placeId}`;
+    res.send(query);
+  } catch (error) {
+    console.error("Error retrieving reviews:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Posting comment & Rate
+app.post("/reviews", async (req, res) => {
+  const { user_id, place_id, rating, review_comment } = req.body;
+  try {
+    const review = await sql`
+      INSERT INTO reviews (user_id, place_id, rating, review_comment)
+      VALUES (${user_id}, ${place_id}, ${rating}, ${review_comment})
+    `;
+    res.send(review);
+  } catch (error) {
+    console.error("Error adding review:", error);
+    res.status(500).send({ error: "Internal server error" });
+  }
+});
+
+// Delete the review by ID
+app.delete("/reviews/:id", async (req, res) => {
+  try {
+    const reviewID = req.params.id;
+    const query = await sql`DELETE FROM reviews WHERE id = ${reviewID}`
+    res.send(query);
+
+  } catch (error) {
+    console.error("Error deleting place.");
+    res.status(500).send({ error: "Internal server error" });
+  }
 });
 
 //get place & search by name - country & sort by hardShip 
@@ -107,6 +142,7 @@ app.get('/places', async (req, res) => {
   }
 });
 
+
 app.get("/places/:id", async (req, res) => {
   try {
     const placeId = req.params.id;
@@ -118,6 +154,7 @@ app.get("/places/:id", async (req, res) => {
 
   }
 });
+
 
 app.get("/users/:id", async (req, res) => {
   try {
@@ -131,12 +168,12 @@ app.get("/users/:id", async (req, res) => {
 });
 
 app.post("/places", async (req, res) => {
-  const { name, description, country } = req.body;
-  const places = await sql`INSERT INTO places (name, description, country) VALUES (${name}, ${description}, ${country})`
+  const { name, description, country, hardship } = req.body;
+  const places = await sql`INSERT INTO places (name, description, country, hardship) VALUES (${name}, ${description}, ${country}, ${hardship})`
   res.send(places);
 });
 
-//delete place 
+//Delete place 
 app.delete("/places/:id", async (req, res) => {
   try {
     const placeID = req.params.id;
@@ -149,20 +186,7 @@ app.delete("/places/:id", async (req, res) => {
   }
 });
 
-//edit place
-app.patch("/places/:id", async (req, res) => {
-  try {
-    const placeID = req.params.id;
-    let { hardship } = req.body;
-    const query = await sql`UPDATE places SET hardship = ${hardship} WHERE id = ${placeID}`;
-    res.send(query);
-  } catch (error) {
-    console.error("place was not edit", error);
-    res.status(401).json({ error: "Internal server error" })
-  }
-});
-
-//edit place 
+//Edit place 
 app.put("/places/:id", async (req, res) => {
   try {
     const placeId = req.params.id;
@@ -175,12 +199,12 @@ app.put("/places/:id", async (req, res) => {
   }
 });
 
-//login
+//Login - Posting users
 app.post('/users', async (req, res) => {
   try {
     const { username, pasword } = req.body;
-    const headers = req.headers;
-    console.log(headers);
+    // const headers = req.headers;
+    // console.log(headers);
     const findUser = await sql`SELECT * FROM users WHERE username = ${username} AND pasword = ${pasword};`;
     if (findUser && findUser.length > 0) {
       res.send({ user: { id: findUser[0].id, username: findUser[0].username, isadmin: findUser[0].isadmin } });
