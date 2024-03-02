@@ -26,11 +26,6 @@ app.use(function (_, res, next) {
 });
 
 let { PGHOST, PGDATABASE, PGUSER, PGPASSWORD, ENDPOINT_ID } = process.env;
-// PGHOST = 'ep-royal-morning-23801106.us-east-2.aws.neon.tech'
-// PGDATABASE = 'FinalProject'
-// PGUSER = 'hediyealitabar'
-// PGPASSWORD = '0FiAKUuqdM1E'
-// ENDPOINT_ID = 'ep-royal-morning-23801106'
 
 const sql = postgres({
   host: PGHOST,
@@ -118,9 +113,6 @@ app.get("/places", async (req, res) => {
     if (!country & !name) {
       query = await sql`SELECT * FROM places`;
       res.send(query);
-      // sql`SELECT * FROM places`.then((result) => {
-      //   res.send(result);
-      // });
     } else if (name) {
       query = await sql`${query} WHERE LOWER(name) LIKE '%' || ${name} || '%'`;
       res.send(query);
@@ -132,10 +124,7 @@ app.get("/places", async (req, res) => {
       query = sql`SELECT * FROM places ORDER BY hardship`;
       res.send(query);
     }
-    // else if (req.query.sort) {
-    //   query = await sql`SELECT * FROM places ORDER BY name ASC`;
-    //   res.send(query);
-    // }
+
   } catch (error) {
     res.status(500).send({ error: error.message });
   }
@@ -164,21 +153,28 @@ app.get("/users/:id", async (req, res) => {
 });
 
 app.post("/places", async (req, res) => {
-  const { name, description, country, hardship } = req.body;
-  const places =
-    await sql`INSERT INTO places (name, description, country, hardship) VALUES (${name}, ${description}, ${country}, ${hardship})`;
-  res.send(places);
+  try{
+    const { name, description, country, hardship } = req.body;
+    const places =
+      await sql`INSERT INTO places (name, description, country, hardship) VALUES (${name}, ${description}, ${country}, ${hardship})`;
+    res.send(places);
+  }catch{
+    console.error("Error adding place:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+
 });
 
 //Delete place
 app.delete("/places/:id", async (req, res) => {
+  const placesId = req.params.id;
   try {
-    const placeID = req.params.id;
-    const query = await sql`DELETE FROM places WHERE id = ${placeID}`;
+    await sql`UPDATE reviews SET place_id = NULL WHERE place_id = ${placesId}`;
+    const query = await sql`DELETE FROM places WHERE id = ${placesId}`;
     res.send(query);
   } catch (error) {
-    console.error("Error deleting place.");
-    res.status(500).send({ error: "Internal server error" });
+    res.status(500).json({ error: "Internal server error" });
+    console.log("Error deleting place:", error);
   }
 });
 
@@ -201,12 +197,8 @@ app.post("/users", async (req, res) => {
   try {
     const { username, pasword } = req.body;
     const hashedPassword = sha256(pasword);
-    // const token = req.headers.authorization;
-    // console.log(token);
     const findUser =
       await sql`SELECT * FROM users WHERE username = ${username} AND pasword = ${hashedPassword};`;
-    //  console.log(hashedPassword);
-    // console.log(findUser);
     if (findUser && findUser.length > 0) {
       res.send({
         user: {
@@ -227,31 +219,10 @@ app.post("/users", async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("Login or Siggup faield :", error);
+    console.error("Login or Signup faield :", error);
     res.status(401).json({ error: "Internal server error" });
   }
 });
-
-// app.post("/users", async (req, res) => {
-//   try {
-//     const { username, pasword } = req.body;
-//     const enPass = sha256(pasword);
-//     const validUser = await sql`SELECT * FROM users WHERE username = ${username} AND pasword = ${enPass} `;
-//     // console.log(validUser);
-//     if (validUser && validUser.length > 0) {
-//       res.send({ user: { id: validUser[0].id, username: validUser[0].username, isadmin: validUser[0].isadmin } });
-//     } else if (!(username === username) && !(pasword === pasword)) {
-//       res.status(401).json({ message: 'Wrong username and/or password' });
-//     }
-//     else if (!validUser && username.length > 0 && pasword.length > 0) {
-//       const newUser = await sql`INSERT INTO users (username, pasword, is_admin) VALUES (${username}, ${enPass}, false) RETURNING *`;
-//       res.status(201).json({ message: 'User created successfully', user: { error: newUser[0].username, pasword: newUser[0].pasword } });
-//       console.log("new",newUser);
-//     }
-//   } catch (error) {
-//     res.status(500).json({ error: 'Internal server error' });
-//   }
-// });
 
 app.listen(port, () =>
   console.log(` My App listening at http://localhost:${port}`)
